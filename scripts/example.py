@@ -127,29 +127,29 @@ async def run_mission():
     print(f"{triplet[1]=}")
     print(f"{triplet[2]=}")
 
-    print(f"Arming the drone ...")
+    print("Arming the drone ...")
     await drone.action.arm()
 
-    print(f"Taking off ...")
+    print("Taking off ...")
     await drone.action.takeoff()
     await asyncio.sleep(10)
 
 
-    print(f"Going to first waypoint ...")
+    print("Going to first waypoint ...")
     target = triplet[1]
     await goto_destination(drone, target)
     await asyncio.sleep(1)
 
-    print(f"Going to second waypoint ...")
+    print("Going to second waypoint ...")
     target = triplet[2]
     await goto_destination(drone, target)
     await asyncio.sleep(1)
 
-    print(f"Going to home ...")
+    print("Going to home ...")
     lunch = triplet[0]
     await goto_launch(drone, lunch)
 
-    print(f"Landing ...")
+    print("Landing ...")
     await drone.action.land()
 
     await asyncio.sleep(20)  # Attendre que l'atterrissage soit terminé
