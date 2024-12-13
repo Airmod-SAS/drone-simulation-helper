@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Example of a mission with a single drone"""
 
-import sys
 import asyncio
 import math
 from dataclasses import dataclass
