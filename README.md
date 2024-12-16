@@ -12,16 +12,19 @@ I have tried both ArduPilot and PX4 SITL, but i'm currently only able to run PX4
 ## install tools
 
 ```shell
-./prepare.sh gazebo
-./prepare.sh px4
-./build.sh px4
-./prepare.sh qgroundcontrol
+./fast_install.sh
 ```
 wait for reboot (manually `wsl --shutdown` for WSL as reboot does not work properly)
 
-## run simulation
-on three different prompt
-`./run.sh qgroundcontrol`, `./run.sh px4` and `./run.sh example`
+## run example simulation
+
+```shell
+./fast_run.sh
+```
+
+this will open 3 prompt, one with px4 and gazebo, one with the ground controller and the last one with the python example mission.
+
+at the end of the mission, you can relunch it with `./run.sh example` as the 3D simulator and Ground Controller are still running.
 
 # simulator
 
