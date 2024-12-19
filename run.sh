@@ -20,6 +20,7 @@ function webots() {
 }
 
 function px4() {
+    echo "Starting PX4 simulation for drone ${DRONE_ID}"
     cd ${PX4_PATH}
     source ${PX4_VENV_PATH}/bin/activate
     if [ "${DRONE_ID}" == "0" ]; then
@@ -27,7 +28,9 @@ function px4() {
         make px4_sitl gz_x500
     else
         echo "Add copter ${DRONE_ID}"
-        PX4_GZ_STANDALONE=1 PX4_SYS_AUTOSTART=4001 PX4_SIM_MODEL=gz_x500 PX4_GZ_MODEL_POSE="0,${DRONE_ID}" ./build/px4_sitl_default/bin/px4 -i ${DRONE_ID}
+        X=$((DRONE_ID / 3 * 2))
+        Y=$((DRONE_ID % 3 * 2))
+        PX4_GZ_STANDALONE=1 PX4_SYS_AUTOSTART=4001 PX4_SIM_MODEL=gz_x500 PX4_GZ_MODEL_POSE="$X,$Y" ./build/px4_sitl_default/bin/px4 -i ${DRONE_ID}
     fi
 }
 
@@ -37,16 +40,23 @@ function qgroundcontrol() {
 }
 
 function run_example() {
-    echo "Running example"
+    echo "Running example for drone ${DRONE_ID}"
     cd ${SCRIPTS_PATH}
     source ${PX4_VENV_PATH}/bin/activate
-    ./example.py
+    ./example.py -d ${DRONE_ID}
+}
+
+function mavsdk_server() {
+    echo "Running MavSDK server for drone ${DRONE_ID}"
+    cd ${SCRIPTS_PATH}
+    source ${PX4_VENV_PATH}/bin/activate
+    ${PX4_VENV_PATH}/lib/python*/site-packages/mavsdk/bin/mavsdk_server udp://:$((14540 + DRONE_ID)) -p $((50060 + DRONE_ID))
 }
 
 ###### MAIN ######
 
 function usage() {
-    echo "Usage: $0 {webots-docker, ardupilot, webots, px4 <id>, qgroundcontrol, example}"
+    echo "Usage: $0 {webots-docker, ardupilot, webots, px4 <id>, qgroundcontrol, example <id>, mavsdk <id>}"
     exit 1
 }
 
@@ -54,7 +64,7 @@ if [ $# -eq 0 ]; then
     usage
 fi
 
-if [ "$1" == "px4" ] && [ $# -eq 2 ]; then
+if [ $# -eq 2 ]; then
     DRONE_ID=$2
 fi
 
@@ -76,6 +86,9 @@ case $1 in
         ;;
     example)
         run_example
+        ;;
+    mavsdk)
+        mavsdk_server
         ;;
     *)
         echo "Invalid option."

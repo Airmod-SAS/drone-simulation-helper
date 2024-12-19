@@ -6,6 +6,7 @@ import math
 from dataclasses import dataclass
 from mavsdk import System
 from mavsdk.telemetry import Position, EulerAngle
+import argparse
 
 @dataclass
 class Target:
@@ -111,10 +112,10 @@ async def set_target(drone:System, target_lat:float, target_lon:float,
     return Target(current_lat+target_lat, current_lon+target_lon,
                   current_alt+target_alt, 0,0, target_yaw)
 
-async def run_mission():
+async def run_mission(drone_id:int):
     """Run the mission"""
-    drone = System()
-    await drone.connect("udp://:14540")
+    drone = System(mavsdk_server_address="localhost", port=50060+drone_id)
+    await drone.connect()
     lunch    = await set_target(drone,  0,      0,       0)
     target_1 = await set_target(drone,  0.0001, 0.0001, 10, 10)
     target_2 = await set_target(drone, -0.0001, 0.0003,  5, 60)
@@ -137,12 +138,12 @@ async def run_mission():
     print("Going to first waypoint ...")
     target = triplet[1]
     await goto_destination(drone, target)
-    await asyncio.sleep(1)
+    await asyncio.sleep(10)
 
     print("Going to second waypoint ...")
     target = triplet[2]
     await goto_destination(drone, target)
-    await asyncio.sleep(1)
+    await asyncio.sleep(10)
 
     print("Going to home ...")
     lunch = triplet[0]
@@ -151,10 +152,16 @@ async def run_mission():
     print("Landing ...")
     await drone.action.land()
 
-    await asyncio.sleep(20)  # Attendre que l'atterrissage soit terminé
+    await asyncio.sleep(10)  # Attendre que l'atterrissage soit terminé
 
     print("Mission complete!")
     position_task.cancel()
 
 if __name__ == "__main__":
-    asyncio.run(run_mission())
+    def get_args():
+        parser = argparse.ArgumentParser(description="Drone mission script")
+        parser.add_argument("-d","--drone_id", type=int, default=0, help="Drone identifier")
+        return parser.parse_args()
+
+    args = get_args()
+    asyncio.run(run_mission(args.drone_id))
