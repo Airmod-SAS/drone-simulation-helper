@@ -18,10 +18,15 @@ function build_px4() {
     make
 }
 
+function build_ros2() {
+    cd ${ROS2_PATH}
+    colcon build --symlink-install
+}
+
 ###### MAIN ######
 
 function usage() {
-    echo "Usage: $0 {webots-docker, ardupilot, px4}"
+    echo "Usage: $0 {webots-docker, ardupilot, px4, ros2}"
     exit 1
 }
 
@@ -38,6 +43,9 @@ case $1 in
         ;;
     px4)
         build_px4
+        ;;
+    ros2)
+        build_ros2
         ;;
     *)
         echo "Invalid option."

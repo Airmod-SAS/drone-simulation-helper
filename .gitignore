@@ -3,6 +3,8 @@ ardupilot
 PX4-Autopilot
 # source downloaded for local execution
 QGroundControl
+# ROS2 sources
+ros2
 # python virtual environment
 .venv
 # python junk
