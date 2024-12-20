@@ -123,53 +123,37 @@ function scripts_venv() {
 
 function download_ros2_and_dependencies() {
     # support UTF-8
-    sudo apt update && sudo apt install locales
-    sudo locale-gen en_US en_US.UTF-8
-    sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-    export LANG=en_US.UTF-8
+    if locale -a | grep -iq "utf8"; then
+        echo "UTF-8 is already supported."
+    else
+        sudo apt update && sudo apt install locales
+        sudo locale-gen C.UTF-8
+        sudo update-locale LC_ALL=C.UTF-8 LANG=C.UTF-8
+        export LANG=C.UTF-8
+    fi
 
     # setup sources repository
-    sudo apt install software-properties-common
-    sudo add-apt-repository universe
+    sudo apt install software-properties-common -y
+    sudo add-apt-repository universe -y
 
     # setup keys
-    sudo apt update && sudo apt install curl -y
+    sudo apt update -y && sudo apt install curl -y
     sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 
     # add repository
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
-    # install dependencies
-    sudo apt update && sudo apt install -y \
-    python3-flake8-blind-except \
-    python3-flake8-class-newline \
-    python3-flake8-deprecated \
-    python3-mypy \
-    python3-pip \
-    python3-pytest \
-    python3-pytest-cov \
-    python3-pytest-mock \
-    python3-pytest-repeat \
-    python3-pytest-rerunfailures \
-    python3-pytest-runner \
-    python3-pytest-timeout \
-    ros-dev-tools
-
-    # get ROS2 code
-    mkdir -p ${ROS2_PATH}/src
-    cd ${ROS2_PATH}
-    vcs import --input https://raw.githubusercontent.com/ros2/ros2/jazzy/ros2.repos src
+    # get dev tools
+    sudo apt update -y && sudo apt install ros-dev-tools -y
 
     # add missing dependencies
-    sudo apt upgrade
-    sudo rosdep init
-    rosdep update
-    rosdep install --from-paths src --ignore-src -y --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers"
+    sudo apt update -y && sudo apt upgrade -y
+    sudo apt install ros-jazzy-desktop -y
 
     # update bashrc
     if ! grep -Fxq "# source ROS2" ~/.bashrc; then
         echo "# source ROS2" >> ~/.bashrc
-        echo ". ${ROS2_PATH}/install/local_setup.bash" >> ~/.bashrc
+        echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
     fi
 }
 
