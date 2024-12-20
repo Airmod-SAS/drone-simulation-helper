@@ -21,7 +21,7 @@ function build_px4() {
 ###### MAIN ######
 
 function usage() {
-    echo "Usage: $0 {webots-docker, ardupilot, px4, ros2}"
+    echo "Usage: $0 {webots-docker, ardupilot, px4}"
     exit 1
 }
 
