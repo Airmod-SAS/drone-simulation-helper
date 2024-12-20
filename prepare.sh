@@ -121,10 +121,46 @@ function scripts_venv() {
     pip install mavsdk
 }
 
+function download_ros2_and_dependencies() {
+    # support UTF-8
+    if locale -a | grep -iq "utf8"; then
+        echo "UTF-8 is already supported."
+    else
+        sudo apt update && sudo apt install locales
+        sudo locale-gen C.UTF-8
+        sudo update-locale LC_ALL=C.UTF-8 LANG=C.UTF-8
+        export LANG=C.UTF-8
+    fi
+
+    # setup sources repository
+    sudo apt install software-properties-common -y
+    sudo add-apt-repository universe -y
+
+    # setup keys
+    sudo apt update -y && sudo apt install curl -y
+    sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+    # add repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+    # get dev tools
+    sudo apt update -y && sudo apt install ros-dev-tools -y
+
+    # add missing dependencies
+    sudo apt update -y && sudo apt upgrade -y
+    sudo apt install ros-jazzy-desktop -y
+
+    # update bashrc
+    if ! grep -Fxq "# source ROS2" ~/.bashrc; then
+        echo "# source ROS2" >> ~/.bashrc
+        echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+    fi
+}
+
 ###### MAIN ######
 
 function usage() {
-    echo "Usage: $0 {update-docker, ardupilot, webots, px4, gazebo, qgroundcontrol}"
+    echo "Usage: $0 {update-docker, ardupilot, webots, px4, gazebo, qgroundcontrol, venv, ros2}"
     exit 1
 }
 
@@ -154,6 +190,9 @@ case $1 in
         ;;
     venv)
         scripts_venv
+        ;;
+    ros2)
+        download_ros2_and_dependencies
         ;;
     *)
         echo "Invalid option."
