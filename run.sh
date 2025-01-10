@@ -41,7 +41,7 @@ function qgroundcontrol() {
 
 function run_example() {
     echo "Running example for drone ${DRONE_ID}"
-    cd ${SCRIPTS_PATH}
+    cd ${MAVSDK_PATH}
     source ${PX4_VENV_PATH}/bin/activate
     ./example.py -d ${DRONE_ID}
 }

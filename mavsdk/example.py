@@ -3,57 +3,27 @@
 
 import asyncio
 import math
-from dataclasses import dataclass
 from mavsdk import System
-from mavsdk.telemetry import Position, EulerAngle
+from target_log import Target, TargetManager
 import argparse
 
-@dataclass
-class Target:
-    """Target position"""
-    lat: float
-    lon: float
-    alt: float
-    roll: float
-    pitch: float
-    yaw: float
 
-    def __repr__(self):
-        return f"L:{self.lat:.5f}°, l:{self.lon:.5f}°, att:{self.alt:6.2f} m," \
-               f"roll:{self.roll:7.2f}°, pitch:{self.pitch:7.2f}°, yaw:{self.yaw:7.2f}°"
-
-def position_to_target(position:Position, angles:EulerAngle|None) -> Target:
-    """Convert a position and angles to a Target object"""
-    return Target(position.latitude_deg,
-                  position.longitude_deg,
-                  position.absolute_altitude_m,
-                  angles.roll_deg if angles else 0,
-                  angles.pitch_deg if angles else 0,
-                  angles.yaw_deg if angles else 0)
-
-
-async def print_position(drone:System):
-    """Print the current position of the drone"""
-    while True:
-        async for position in drone.telemetry.position():
-            async for angles in drone.telemetry.attitude_euler():
-                target = position_to_target(position, angles)
-                print(f"Current position: {target}")
-                break
-            break
-        await asyncio.sleep(1)
-
-
+async def _get_position_info(drone:System) -> tuple:
+    current_lat = 0
+    current_lon = 0
+    current_alt = 0
+    async for position in drone.telemetry.position():
+        current_lat = position.latitude_deg
+        current_lon = position.longitude_deg
+        current_alt = position.absolute_altitude_m
+        break
+    return current_lat, current_lon, current_alt
 async def check_destination(drone:System, target:Target,
                             tolerance:float=0.0001, max_loops:int=20) -> bool:
     """Check if the drone has reached the target position"""
     loop = 0
     while True:
-        async for position in drone.telemetry.position():
-            current_lat = position.latitude_deg
-            current_lon = position.longitude_deg
-            current_alt = position.absolute_altitude_m
-            break
+        current_lat, current_lon, current_alt = await _get_position_info(drone)
         loop += 1
 
         # Calculer la distance entre la position actuelle et la cible
@@ -76,52 +46,44 @@ async def check_destination(drone:System, target:Target,
 
     return False
 
+async def set_target(drone:System, target_lat:float, target_lon:float,
+                    target_alt:float=0, target_yaw:float=0) -> Target:
+    """Define a target position relative to the current position of the drone"""
+    current_lat, current_lon, current_alt = await _get_position_info(drone)
+    return Target(current_lat+target_lat, current_lon+target_lon,
+                current_alt+target_alt, 0,0, target_yaw)
+
+
 async def goto_destination(drone:System, target:Target,
                            tolerance:float=0.0001, max_loops:int=20) -> bool:
     """Go to destination, and wait until the drone reaches the target position"""
     print(f" Target position: {target}")
     await drone.action.goto_location(target.lat, target.lon, target.alt, target.yaw)
-    result = await check_destination(drone, target, tolerance, max_loops)
+    result = await check_destination(drone,target, tolerance, max_loops)
     print(f" Target position: {target}")
     return result
 
 async def goto_launch(drone:System,lunch:Target):
     """Return to the launch position"""
     async for position in drone.telemetry.home():
-        home = position_to_target(position,None)
+        home = TargetManager.position_to_target(position,None)
         break
     print(f"Home    position: {home}")
     print(f"Launch  position: {lunch}")
     await drone.action.return_to_launch()
-    result = await check_destination(drone, lunch, max_loops=50)
+    result = await check_destination(drone,lunch, max_loops=50)
     print(f"Launch  position: {lunch}")
     return result
-
-async def set_target(drone:System, target_lat:float, target_lon:float,
-                     target_alt:float=0, target_yaw:float=0) -> Target:
-    """Define a target position relative to the current position of the drone"""
-    current_lat = 0
-    current_lon = 0
-    current_alt = 0
-
-    async for position in drone.telemetry.position():
-        current_lat = position.latitude_deg
-        current_lon = position.longitude_deg
-        current_alt = position.absolute_altitude_m
-        break
-    return Target(current_lat+target_lat, current_lon+target_lon,
-                  current_alt+target_alt, 0,0, target_yaw)
 
 async def run_mission(drone_id:int):
     """Run the mission"""
     drone = System(mavsdk_server_address="localhost", port=50060+drone_id)
     await drone.connect()
-    lunch    = await set_target(drone,  0,      0,       0)
-    target_1 = await set_target(drone,  0.0001, 0.0001, 10, 10)
-    target_2 = await set_target(drone, -0.0001, 0.0003,  5, 60)
+    tgm = TargetManager(drone)
+    lunch    = await set_target(drone,0,      0,       0)
+    target_1 = await set_target(drone,0.0001, 0.0001, 10, 10)
+    target_2 = await set_target(drone,-0.0001, 0.0003,  5, 60)
     triplet = [lunch,target_1,target_2]
-
-    position_task = asyncio.create_task(print_position(drone))
 
     print(f"{triplet[0]=}")
     print(f"{triplet[1]=}")
@@ -155,7 +117,6 @@ async def run_mission(drone_id:int):
     await asyncio.sleep(10)  # Attendre que l'atterrissage soit terminé
 
     print("Mission complete!")
-    position_task.cancel()
 
 if __name__ == "__main__":
     def get_args():
