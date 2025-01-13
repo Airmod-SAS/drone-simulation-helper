@@ -3,6 +3,8 @@
 . ./config.env
 
 DRONE_ID=0
+DRONE_TYPE=gz_x500
+DRONE_AUTOSTART=5001
 
 function webots_docker() {
     xhost +local:root > /dev/null 2>&1
@@ -20,17 +22,17 @@ function webots() {
 }
 
 function px4() {
-    echo "Starting PX4 simulation for drone ${DRONE_ID}"
+    echo "Starting PX4 simulation for drone ${DRONE_ID} type ${DRONE_TYPE}"
     cd ${PX4_PATH}
     source ${PX4_VENV_PATH}/bin/activate
     if [ "${DRONE_ID}" == "0" ]; then
         echo "Starting simulation"
-        make px4_sitl gz_x500
+        make px4_sitl ${DRONE_TYPE}
     else
         echo "Add copter ${DRONE_ID}"
         X=$((DRONE_ID / 3 * 2))
         Y=$((DRONE_ID % 3 * 2))
-        PX4_GZ_STANDALONE=1 PX4_SYS_AUTOSTART=4001 PX4_SIM_MODEL=gz_x500 PX4_GZ_MODEL_POSE="$X,$Y" ./build/px4_sitl_default/bin/px4 -i ${DRONE_ID}
+        PX4_GZ_STANDALONE=1 PX4_SYS_AUTOSTART=${DRONE_AUTOSTART} PX4_SIM_MODEL=${DRONE_TYPE} PX4_GZ_MODEL_POSE="$X,$Y" ./build/px4_sitl_default/bin/px4 -i ${DRONE_ID}
     fi
 }
 
@@ -79,6 +81,11 @@ case $1 in
         webots
         ;;
     px4)
+        px4
+        ;;
+    airmod)
+        DRONE_TYPE="gz_airmod_plane"
+        DRONE_AUTOSTART=5008
         px4
         ;;
     qgroundcontrol)
