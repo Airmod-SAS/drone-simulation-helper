@@ -53,6 +53,23 @@ function mavsdk_server() {
     ${PX4_VENV_PATH}/lib/python*/site-packages/mavsdk/bin/mavsdk_server udp://:$((14540 + DRONE_ID)) -p $((50060 + DRONE_ID))
 }
 
+function run_gazebo() {
+    echo "Running Gazebo"
+    cd ${GAZEBO_PATH}
+    gazebo --verbose ./iris_arducopter_demo.world
+}
+
+function run_betaflight() {
+    echo "Running Betaflight"
+    cd ${BETAFLIGHT_PATH}/obj/main/betaflight_SITL.elf
+}
+
+function run_betaconf() {
+    echo "Running Betaflight Web Configurator"
+    cd ${BETAWEBCONF_PATH}
+    ./websockify 127.0.0.1:6761 127.0.0.1:5761
+}
+
 ###### MAIN ######
 
 function usage() {
@@ -89,6 +106,9 @@ case $1 in
         ;;
     mavsdk)
         mavsdk_server
+        ;;
+    betaconf)
+        run_betaconf
         ;;
     *)
         echo "Invalid option."

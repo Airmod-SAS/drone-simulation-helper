@@ -1,6 +1,7 @@
 # project git cloned for local compilation
 ardupilot
 PX4-Autopilot
+betaflight
 # source downloaded for local execution
 QGroundControl
 # python virtual environment

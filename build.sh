@@ -21,6 +21,13 @@ function build_px4() {
 function build_betaflight() {
     # https://betaflight.com/docs/development/building/Building-in-Ubuntu
     cd ${BETAFLIGHT_PATH}
+    make arm_sdk_install
+    make configs
+    make TARGET=SITL
+}
+
+function build_betaflight_web_config() {
+    cd ${BETAWEBCONF_PATH}
     make
 }
 
@@ -47,6 +54,7 @@ case $1 in
         ;;
     betaflight)
         build_betaflight
+        build_betaflight_web_config
         ;;
     *)
         echo "Invalid option."

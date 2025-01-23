@@ -161,10 +161,12 @@ function download_betaflight() {
     sudo apt update -y && sudo apt upgrade -y
     sudo apt install -y build-essential libblocksruntime-dev libtool git curl clang-18
     git clone https://github.com/betaflight/betaflight.git
-    cd ${BETAFLIGHT_PATH}
-    make arm_sdk_install
-    make configs
 }
+
+function download_betaflight_web_config() {
+    git clone git@github.com:novnc/websockify-other.git
+}
+
 ###### MAIN ######
 
 function usage() {
@@ -204,6 +206,7 @@ case $1 in
         ;;
     betaflight)
         download_betaflight
+        download_betaflight_web_config
         ;;
     *)
         echo "Invalid option."
