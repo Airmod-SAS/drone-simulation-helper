@@ -18,6 +18,12 @@ function build_px4() {
     make
 }
 
+function build_betaflight() {
+    # https://betaflight.com/docs/development/building/Building-in-Ubuntu
+    cd ${BETAFLIGHT_PATH}
+    make
+}
+
 ###### MAIN ######
 
 function usage() {
@@ -38,6 +44,9 @@ case $1 in
         ;;
     px4)
         build_px4
+        ;;
+    betaflight)
+        build_betaflight
         ;;
     *)
         echo "Invalid option."

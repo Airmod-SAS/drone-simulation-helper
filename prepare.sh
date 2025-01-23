@@ -157,10 +157,18 @@ function download_ros2_and_dependencies() {
     fi
 }
 
+function download_betaflight() {
+    sudo apt update -y && sudo apt upgrade -y
+    sudo apt install -y build-essential libblocksruntime-dev libtool git curl clang-18
+    git clone https://github.com/betaflight/betaflight.git
+    cd ${BETAFLIGHT_PATH}
+    make arm_sdk_install
+    make configs
+}
 ###### MAIN ######
 
 function usage() {
-    echo "Usage: $0 {update-docker, ardupilot, webots, px4, gazebo, qgroundcontrol, venv, ros2}"
+    echo "Usage: $0 {update-docker, ardupilot, webots, px4, gazebo, qgroundcontrol, venv, ros2, betaflight}"
     exit 1
 }
 
@@ -193,6 +201,9 @@ case $1 in
         ;;
     ros2)
         download_ros2_and_dependencies
+        ;;
+    betaflight)
+        download_betaflight
         ;;
     *)
         echo "Invalid option."
